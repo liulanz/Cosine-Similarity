@@ -7,8 +7,6 @@ import pyspark
 
 
 def main():
-	
-	
 	if len(sys.argv) != 3:
 		print('Invalid number of arguments')
 		exit(0)
