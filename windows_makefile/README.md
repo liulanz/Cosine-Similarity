@@ -1,7 +1,7 @@
 
 # Run 
 ```
-Make
+make
 ```
 or
 ```
