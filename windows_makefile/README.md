@@ -5,7 +5,7 @@ make
 ```
 or
 ```
-spark-submit ..\main.py INFILE=<textfile> QUERY=<query_term>
+make INFILE=<textfile> QUERY=<query_term>
 ```
 ```
 type output\part-00000
