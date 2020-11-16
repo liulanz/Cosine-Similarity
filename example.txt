@@ -1,3 +1,6 @@
 1 I like data science
 2 I hate data
 3 want A
+4 I love dogs
+5 I hate dogs and knitting
+6 knitting is my hobby and my passion
