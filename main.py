@@ -5,7 +5,7 @@ import pyspark
 # https://pythonexamples.org/pyspark-word-count-example/
 # spark-submit main.py
 
-
+query_term = ""
 def main():
 	if len(sys.argv) != 3:
 		print('Invalid number of arguments')
@@ -14,19 +14,24 @@ def main():
     #initialize PySpark
 	sc = pyspark.SparkContext("local", "PySpark Word Count Example")
 	filename = sys.argv[1]
-	query = sys.argv[2]
+	query_term= sys.argv[2]
 
 	# # load text file from local FS
-	lines = sc.textFile(filename)
+	rdd = sc.textFile(filename)
+
+	#https://towardsdatascience.com/tf-idf-calculation-using-map-reduce-algorithm-in-pyspark-e89b5758e64c
 	
-	# read data from text file and split each line into words
-	words = lines.flatMap(lambda line: line.split(" "))
+	# Mapping key/value pairs to a new key/value pairs.
+	# ('document id', 'text) => (('document id', 'term'),1)
+	map1 = rdd.flatMap(lambda x: [((x[0],i), 1) for i in x[2:].split(" ") if i== query_term])
 	
-	# count the occurrence of each word
-	wordCounts = words.map(lambda word: (word, 1)).reduceByKey(lambda a,b:a +b)
+	map1.saveAsTextFile("output/")
+	# Reducing key/value pairs
+	#wordCounts = map1.reduceByKey(lambda x,y: x+y)
+	# wordCounts = words.map(lambda word: (word, 1)).reduceByKey(lambda a,b:a +b)
 	
 	# save the counts to output
-	wordCounts.saveAsTextFile("output/")
+	#wordCounts.saveAsTextFile("output/")
 
 
 if __name__ == '__main__':
