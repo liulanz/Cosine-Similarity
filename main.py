@@ -24,7 +24,7 @@ def main():
 	
 	# Mapping key/value pairs to a new key/value pairs.
 	# map1 = rdd.flatMap(lambda x: [((x[0],i), 1) for i in x[2:].split(" ") if i== query_term])
-	map1 = rdd.flatMap(lambda x: [((x[0],i), 1) for i in x[2:].split(" ")])
+	map1 = rdd.flatMap(lambda x: [((x.split()[0],i), 1) for i in x.split(" ")[1:]])
 	# (('document id', 'term'),1) => (('document id', 'term') [1+1+1...])
 	reduce1 = map1.reduceByKey(lambda x,y:x+y)
 
