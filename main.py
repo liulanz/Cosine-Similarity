@@ -43,17 +43,21 @@ def main():
 	reduce2 = map4.reduceByKey(lambda x,y:x+y)
 
 	# ('term', Doc Frequency Containing w) => ('term',IDF)
-	#idf = reduce2.map(lambda x: (x[0],math.log10(len(data)/x[1])))
+	lines = rdd.count()
+	idf = reduce2.map(lambda x: (x[0],math.log10(lines/x[1])))
 
+	# perform an inner join to assign each term with a document id, TF, and IDF score
+	rdd=tf.join(idf)
 
-	reduce2.saveAsTextFile("output/")
-	# Reducing key/value pairs
-	#wordCounts = map1.reduceByKey(lambda x,y: x+y)
-	# wordCounts = words.map(lambda word: (word, 1)).reduceByKey(lambda a,b:a +b)
+	# multiply TF and IDF values of each term associated with respective document id
+	# (('document id'), ('token', TF, IDF, TF-IDF))
+	rdd=rdd.map(lambda x: (x[1][0][0],(x[0],x[1][0][1],x[1][1],x[1][0][1]*x[1][1]))).sortByKey()
+	#rdd.saveAsTextFile("output/")
+	rdd=rdd.map(lambda x: (x[0],x[1][0],x[1][1],x[1][2],x[1][3]))
+
+	#rdd.toDF(["DocumentId","Term","TF","IDF","TF-IDF"]).show()
 	
-	# save the counts to output
-	#wordCounts.saveAsTextFile("output/")
-
+	rdd.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
