@@ -2,8 +2,6 @@ import sys
 import pyspark
 import math
 
-
-# https://pythonexamples.org/pyspark-word-count-example/
 # spark-submit main.py
 
 query_term = ""
@@ -33,6 +31,8 @@ def main():
 	reduce1 = map1.reduceByKey(lambda x,y:x+y)
 
 
+
+
 	# (('document id', 'term') [1+1+1...]) => ('document id', ('term', [1+1+1..]))
 	doc_termcount = reduce1.map(lambda x: (x[0][0], (x[0][1], x[1])))
 
@@ -40,50 +40,19 @@ def main():
 	combine = doc_termcount.join(term_totalcount)
 
 
+	tf = combine.map(lambda x: (x[1][0][0], (x[0], x[1][0][1]/x[1][1])))
 	
 	docs_num = rdd.count()
+	totalterm_doccount = reduce1.map(lambda x: (x[0][1],1)).reduceByKey(lambda x,y:x+y)
 
-
-
-
+	idf = totalterm_doccount.map(lambda x: (x[0], math.log10(docs_num/x[1])))
 
 	# Computing TF *IDF====================================
-	# output = ('term', ('document id', TF*IDF))
-	tf = combine.map(lambda x: (x[1][0][0], (x[0], x[1][0][1]/x[1][1]）
-#下面的算错了
-	#tfidf = combine.map(lambda x: (x[1][0][0], (x[0], x[1][0][1]/x[1][1], math.log10(docs_num/x[1][0][1]), docs_num)))
+	rdd=tf.join(idf)
+	tfidf=rdd.map(lambda x: (x[1][0][0],(x[0],x[1][0][1]*x[1][1]))).sortByKey()
 
-
-	# # Computing Inverse Document Frequency (IDF)=======================================
 	
-	# idf = combine.map(lambda x: (x[1][0][0], (x[0], math.log10(docs_num/x[1][0][1]))))
-
-	# # Computing tf*IDF=======================================
-	# tf_idf = tf.join(idf)
-
-	# tfidf = tf_idf.map(lambda x: (x[0],(x[1][0][0], x[1][0][1] * x[1][1][1] )))
-	# # ('term', ('document id', TF, 1)) =>('term', 1)
-	# map4 = map3.map(lambda x:(x[0],x[1][2]))
-
-	# # ('term',1)=>('term',[1,1,....])
-	# reduce2 = map4.reduceByKey(lambda x,y:x+y)
-
-	# # ('term', Doc Frequency Containing w) => ('term',IDF)
-	# lines = rdd.count()
-	# idf = reduce2.map(lambda x: (x[0],math.log10(lines/x[1])))
-
-	# # perform an inner join to assign each term with a document id, TF, and IDF score
-	# rdd=tf.join(idf)
-
-	# # multiply TF and IDF values of each term associated with respective document id
-	# # (('document id'), ('token', TF, IDF, TF-IDF))
-	# rdd=rdd.map(lambda x: (x[1][0][0],(x[0],x[1][0][1],x[1][1],x[1][0][1]*x[1][1]))).sortByKey()
-	# #rdd.saveAsTextFile("output/")
-	# rdd=rdd.map(lambda x: (x[0],x[1][0],x[1][1],x[1][2],x[1][3]))
-
-	#rdd.toDF(["DocumentId","Term","TF","IDF","TF-IDF"]).show()
-	
-	tf.saveAsTextFile("output/")
+	tfidf.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
