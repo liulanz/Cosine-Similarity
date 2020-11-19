@@ -1,4 +1,4 @@
-FILE?="..\example1.txt"
+FILE?="..\example.txt"
 QUERY?="I"
 default:
 	spark-submit ..\main.py ${FILE} ${QUERY} 
