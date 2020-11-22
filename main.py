@@ -51,11 +51,21 @@ def main():
 	tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1])))
 
 	# ================================ Similarity ====================================
-	tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
+	tfidf = tfidf.sortByKey()
+	# tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
+	query_term_rdd = tfidf.lookup(query_term)
 	
-	query_term_rdd = tfidf.filter(lambda x: query_term in x).sortBy(lambda x: x[1][0])
-	query_term_rdd = query_term_rdd.groupByKey().mapValues(list)
-	tfidf.saveAsTextFile("output/")
+	# query_term_rdd = tfidf.filter(lambda x: query_term in x)
+
+	q = [i for i in query_term_rdd]
+
+	sqrt_sim = sum(map(lambda x: x[1] ** 2, q)) **(1/2)
+	
+	
+
+	#similartities = tfidf.map(lambda w: (w[0], sum([q[0][elem] * w[1][elem] for elem in q[0].keys() & w[1].keys()]) / (sum(map(lambda x: x[1] ** 2, w)) ** (1/2) * sqrt_sim)))
+
+	#similartities.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
