@@ -48,12 +48,14 @@ def main():
 
 	# ================================ Computing TF *IDF====================================
 	rdd=tf.join(idf)
-	tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1]))).sortByKey()
-	
+	tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1])))
+
+	# ================================ Similarity ====================================
+	tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
 	
 	query_term_rdd = tfidf.filter(lambda x: query_term in x).sortBy(lambda x: x[1][0])
-
-	query_term_rdd.saveAsTextFile("output/")
+	query_term_rdd = query_term_rdd.groupByKey().mapValues(list)
+	tfidf.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
