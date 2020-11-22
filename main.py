@@ -1,6 +1,7 @@
 import sys
 import pyspark
 import math
+from pyspark.sql import SparkSession
 
 # spark-submit main.py <query_term>
 
@@ -53,19 +54,50 @@ def main():
 	# ================================ Similarity ====================================
 	tfidf = tfidf.sortByKey()
 	# tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
-	query_term_rdd = tfidf.lookup(query_term)
+	tfidf.collect()
+
+
+	#------------ Creating matrix -------------------
+	rdd=tfidf.map(lambda x: (x[0],x[1][0],x[1][1]))
+	spark = SparkSession(sc)
+	hasattr(rdd, "toDF")
+	rdd.toDF(["term","DocumentId","TF-IDF"]).show()
+	"""
++-------+----------+--------------------+
+|   term|DocumentId|              TF-IDF|
++-------+----------+--------------------+
+|      A|        d3| 0.23856062735983122|
+|      I|        d2|0.058697086351893746|
+|      I|        d1| 0.04402281476392031|
+|   data|        d2|0.058697086351893746|
+|   data|        d1| 0.04402281476392031|
+|   hate|        d2| 0.15904041823988746|
+|   like|        d1| 0.11928031367991561|
+|science|        d1| 0.11928031367991561|
+|   want|        d3| 0.23856062735983122|
++-------+----------+--------------------+
+	"""
+
 	
-	# query_term_rdd = tfidf.filter(lambda x: query_term in x)
 
+	
+	# -------- Computing buttom part of sqrt for query term -----
+	query_term_rdd = tfidf.lookup(query_term)
+	tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
 	q = [i for i in query_term_rdd]
-
 	sqrt_sim = sum(map(lambda x: x[1] ** 2, q)) **(1/2)
 	
+
+	# query_term_rdd = tfidf.filter(lambda x: query_term in x)
 	
+	
+	# #test = tfidf.map(lambda w: (w[0], (print([elem[0] for elem in w[1] for qele in q[0] ]))))
+	# a = np.array(tfidf.collect())
+	# similartities = tfidf.map(lambda w: (w[0],  
+	#similartities = tfidf.map(lambda w: (w[0], sum([q[0][elem] * w[1][elem] for elem in q & w[1]]) / (sum(map(lambda x: x[1] ** 2, w)) ** (1/2) * sqrt_sim)))
 
-	#similartities = tfidf.map(lambda w: (w[0], sum([q[0][elem] * w[1][elem] for elem in q[0].keys() & w[1].keys()]) / (sum(map(lambda x: x[1] ** 2, w)) ** (1/2) * sqrt_sim)))
-
-	#similartities.saveAsTextFile("output/")
+	# similartities.saveAsTextFile("output/")
+	tfidf.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
