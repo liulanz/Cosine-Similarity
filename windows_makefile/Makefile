@@ -1,8 +1,8 @@
-FILE?="..\large.txt"
+FILE?="..\example.txt"
 QUERY?="I"
 default:
 	spark-submit ..\similarity.py ${FILE} ${QUERY} 
-	
+	type output\part-*
 large: 
 	spark-submit ..\main.py ..\large.txt ${QUERY} 
 clean:
