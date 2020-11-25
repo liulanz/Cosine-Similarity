@@ -1,7 +1,6 @@
 import sys
 import pyspark
 import math
-from pyspark.sql import SparkSession
 
 # spark-submit main.py <query_term>
 
@@ -15,9 +14,11 @@ def main():
 	filename = sys.argv[1]
 	query_term= sys.argv[2]
 
-	# # load text file from local FS
+	# load text file from local FS
 	rdd = sc.textFile(filename)
-	map2 = rdd.flatMap(lambda x: [(x.split()[0], 0)])
+
+	# empty document id pair for every document id: ('document id', 0)
+	empty_doc = rdd.flatMap(lambda x: [(x.split()[0], 0)])
 
 	#https://towardsdatascience.com/tf-idf-calculation-using-map-reduce-algorithm-in-pyspark-e89b5758e64c
 	
@@ -50,24 +51,30 @@ def main():
 
 	# ================================ Computing TF *IDF====================================
 	rdd=tf.join(idf)
-	tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1]))).groupByKey().mapValues(list)
+	#tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1]))).groupByKey().mapValues(list)
+	tfidf=rdd.map(lambda x: ((x[0],x[1][0][0]),x[1][0][1]*x[1][1]))
 
 	# ================================ Similarity ====================================
 	# tfidf = tfidf.sortByKey()
 	# tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
 
-
-	terms = tfidf.map(lambda x: (x[0]))
+	# every distinct terms
+	terms = tfidf.map(lambda x: (x[0][0])).distinct()
 	
-	map3 = terms.cartesian(map2).groupByKey().mapValues(list)
+	# empty matrix elements
+	# output = (('term', 'document id'), 0)
+	empty_matrix_elem = terms.cartesian(empty_doc).map(lambda x: ((x[0], x[1][0]), x[1][1]))
 
-	map4 = map3.flatMap(lambda x: [((x[0], i[0] ), i[1]) for i in x[1]])
-	map5 = tfidf.flatMap(lambda x: [((x[0], i[0]),i[1]) for i in x[1]])
-	map6 = map5.union(map4).reduceByKey(lambda x,y : x+y).sortByKey()
-	map7 = map6.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
+	# tfidf for each term in every document
+	# output = (('term', 'document id'), tfidf)
+	map2 = tfidf.union(empty_matrix_elem).reduceByKey(lambda x,y : x+y).sortByKey()
+
+	# transform into matrix
+	# output = ('term', [('document id1'), tfidf1), ('document id2'), tfidf2), ...]
+	tfidf_matrix = map2.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
 
 
-	map7.saveAsTextFile("output/")
+	tfidf_matrix.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
