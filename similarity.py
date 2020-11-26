@@ -51,7 +51,6 @@ def main():
 
 	# ================================ Computing TF *IDF====================================
 	rdd=tf.join(idf)
-	#tfidf=rdd.map(lambda x: (x[0],(x[1][0][0],x[1][0][1]*x[1][1]))).groupByKey().mapValues(list)
 	tfidf=rdd.map(lambda x: ((x[0],x[1][0][0]),x[1][0][1]*x[1][1]))
 
 	# ================================ Similarity ====================================
@@ -73,8 +72,17 @@ def main():
 	# output = ('term', [('document id1'), tfidf1), ('document id2'), tfidf2), ...]
 	tfidf_matrix = map2.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
 
+	# compute sum of squares
+	# output = ('term', tfidf*tfidf)
+	sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
 
-	tfidf_matrix.saveAsTextFile("output/")
+	# compute suare root of sum of squares
+	# output = ('term', (tfidf*tfidf)**(1/2))
+	sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
+
+	sqrt_sum.saveAsTextFile("output/")
+
+	#tfidf_matrix.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
