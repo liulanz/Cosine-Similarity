@@ -1,9 +1,10 @@
 import sys
 import pyspark
 import math
+import re
 
 # spark-submit main.py <query_term>
-
+# filter_pattern = dis_*_dis
 def main():
 	if len(sys.argv) != 3:
 		print('Invalid number of arguments')
@@ -17,8 +18,8 @@ def main():
 	# load text file from local FS
 	rdd = sc.textFile(filename)
 
-	# empty document id pair for every document id: ('document id', 0)
-	empty_doc = rdd.flatMap(lambda x: [(x.split()[0], 0)])
+	# # empty document id pair for every document id: ('document id', 0)
+	# empty_doc = rdd.flatMap(lambda x: [(x.split()[0], 0)])
 
 	#https://towardsdatascience.com/tf-idf-calculation-using-map-reduce-algorithm-in-pyspark-e89b5758e64c
 	
@@ -28,6 +29,9 @@ def main():
 	# (('document id', 'term'),1) => (('document id', 'term') [1+1+1...])
 	# might have same terms in same document
 	reduce1 = map1.reduceByKey(lambda x,y:x+y)
+
+	# empty document id pair for every document id: ('document id', 0)
+	empty_doc = reduce1.map(lambda x: (x[0][0], 0)).distinct()
 
 
 	# ============================= Computing TF====================================
@@ -72,6 +76,7 @@ def main():
 	# output = ('term', [('document id1'), tfidf1), ('document id2'), tfidf2), ...]
 	tfidf_matrix = map2.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
 
+	map2 = map2.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0][0]))
 	# compute sum of squares
 	# output = ('term', tfidf*tfidf)
 	sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
@@ -80,9 +85,10 @@ def main():
 	# output = ('term', (tfidf*tfidf)**(1/2))
 	sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
 
+
 	sqrt_sum.saveAsTextFile("output/")
 
-	#tfidf_matrix.saveAsTextFile("output/")
+	# tfidf_matrix.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()

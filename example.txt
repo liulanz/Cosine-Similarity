@@ -1,3 +1,4 @@
 d1 I like data science
 d2 I hate data
 d3 want A
+d4 growth inhibition dis_breast_cancer_dis cell grb2 downregulation correlate inactivation mitogen-activated protein kinase gene_egfr+_gene erbb2 cell increased dis_breast_cancer_dis growth
