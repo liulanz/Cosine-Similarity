@@ -75,15 +75,33 @@ def main():
 	# transform into matrix
 	# output = ('term', [('document id1'), tfidf1), ('document id2'), tfidf2), ...]
 	tfidf_matrix = map2.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
+	
 
-	map2 = map2.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0][0]))
+	# ============== look up query term =====================
+	query_term_list = tfidf_matrix.lookup(query_term)
+	q = [i for i in query_term_list]
+	sqrt_query = sum(map(lambda x: x[1][1] ** 2, q)) **(1/2)
+
+
+
+	# ======================== filter terms ======================
+	tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
 	# compute sum of squares
 	# output = ('term', tfidf*tfidf)
+
+
+	top = map2.map(lambda x: (x[0][0], x[1]))
 	sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
+
 
 	# compute suare root of sum of squares
 	# output = ('term', (tfidf*tfidf)**(1/2))
 	sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
+
+
+
+
+
 
 
 	sqrt_sum.saveAsTextFile("output/")
