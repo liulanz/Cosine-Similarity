@@ -3,8 +3,6 @@ import pyspark
 import math
 import re
 
-# spark-submit main.py <query_term>
-# filter_pattern = dis_*_dis
 def main():
 	if len(sys.argv) != 3:
 		print('Invalid number of arguments')
@@ -18,11 +16,6 @@ def main():
 	# load text file from local FS
 	rdd = sc.textFile(filename)
 
-	# # empty document id pair for every document id: ('document id', 0)
-	# empty_doc = rdd.flatMap(lambda x: [(x.split()[0], 0)])
-
-	#https://towardsdatascience.com/tf-idf-calculation-using-map-reduce-algorithm-in-pyspark-e89b5758e64c
-	
 	# Mapping key/value pairs to a new key/value pairs.
 	map1 = rdd.flatMap(lambda x: [((x.split()[0],i), 1) for i in x.split(" ")[1:]])
 	
@@ -80,24 +73,14 @@ def main():
 
 
 	# ======================== filter terms ======================
-	# tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
+	tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
 	
 	# ============== calculate similarities  ====================
 	similarities = tfidf_matrix.map(lambda x: (sum([q[0][ele][1] * x[1][ele][1] for ele in range (len(q[0]))])/ ((sum(map(lambda w: w[1]**2, x[1]))**(1/2))*sqrt_query), x[0]))
 	
 	# ================= sorting =============================== 
 	similarities = similarities.sortByKey(ascending = False)
-	# compute sum of squares
-	# output = ('term', tfidf*tfidf)
-
-	# sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
-
-
-	# # compute suare root of sum of squares
-	# # output = ('term', (tfidf*tfidf)**(1/2))
-	# sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
-
-
+	
 	similarities.saveAsTextFile("output/")
 
 if __name__ == '__main__':
