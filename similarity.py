@@ -57,10 +57,7 @@ def main():
 	rdd=tf.join(idf)
 	tfidf=rdd.map(lambda x: ((x[0],x[1][0][0]),x[1][0][1]*x[1][1]))
 
-	# ================================ Similarity ====================================
-	# tfidf = tfidf.sortByKey()
-	# tfidf = tfidf.sortBy(lambda x: x[1][0]).groupByKey().mapValues(list)
-
+	# ================================ Turn into same dimension ====================================
 	# every distinct terms
 	terms = tfidf.map(lambda x: (x[0][0])).distinct()
 	
@@ -73,40 +70,35 @@ def main():
 	map2 = tfidf.union(empty_matrix_elem).reduceByKey(lambda x,y : x+y).sortByKey()
 
 	# transform into matrix
-	# output = ('term', [('document id1'), tfidf1), ('document id2'), tfidf2), ...]
+	# output = ('term', [('document id1', tfidf1), ('document id2', tfidf2), ...]
 	tfidf_matrix = map2.map(lambda x: (x[0][0], (x[0][1], x[1]))).groupByKey().mapValues(list)
 	
-
 	# ============== look up query term =====================
 	query_term_list = tfidf_matrix.lookup(query_term)
 	q = [i for i in query_term_list]
-	sqrt_query = sum(map(lambda x: x[1][1] ** 2, q)) **(1/2)
-
+	sqrt_query = (sum(map(lambda x: x[1]** 2, q[0]))) **(1/2)
 
 
 	# ======================== filter terms ======================
-	tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
+	# tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
+	
+	# ============== calculate similarities  ====================
+	similarities = tfidf_matrix.map(lambda x: (sum([q[0][ele][1] * x[1][ele][1] for ele in range (len(q[0]))])/ ((sum(map(lambda w: w[1]**2, x[1]))**(1/2))*sqrt_query), x[0]))
+	
+	# ================= sorting =============================== 
+	similarities = similarities.sortByKey(ascending = False)
 	# compute sum of squares
 	# output = ('term', tfidf*tfidf)
 
-
-	top = map2.map(lambda x: (x[0][0], x[1]))
-	sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
+	# sqr_sum = map2.map(lambda x: (x[0][0], x[1]**2)).reduceByKey(lambda x,y:x+y)
 
 
-	# compute suare root of sum of squares
-	# output = ('term', (tfidf*tfidf)**(1/2))
-	sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
+	# # compute suare root of sum of squares
+	# # output = ('term', (tfidf*tfidf)**(1/2))
+	# sqrt_sum = sqr_sum.map(lambda x: (x[0], x[1]**(1/2)))
 
 
-
-
-
-
-
-	sqrt_sum.saveAsTextFile("output/")
-
-	# tfidf_matrix.saveAsTextFile("output/")
+	similarities.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
