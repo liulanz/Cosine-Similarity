@@ -1,4 +1,4 @@
-# TF-IDF Similiarity
+# Cosine Similarity
 CSCI 49376: Big Data Technology
 Authors: Liulan Zheng, Yiheng Cen Feng
 
