@@ -15,5 +15,5 @@ spark-submit similarity.py <filename> <query_term>
 ```
 Output will be partitioned and saved in ``output/``. Make sure you delete ``output/`` before running the program again. 
 
-# P.S.
-To simplify the process, "output/" will only contains terms in the form of "dis_..._dis" and "gene_..._gene"
+### P.S.
+To simplify the process, ``output/`` will only contains terms in the form of ``dis_..._dis`` and ``gene_..._gene``
