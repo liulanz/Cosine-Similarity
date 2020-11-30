@@ -50,9 +50,12 @@ def main():
 	rdd=tf.join(idf)
 	tfidf=rdd.map(lambda x: ((x[0],x[1][0][0]),x[1][0][1]*x[1][1]))
 
+	# ======================== filter terms ======================
+	filtered_tfidf = tfidf.filter(lambda x :  re.match('^(gene|dis)_[^ ]+_\\1$', x[0][0]) or (x[0][0]==query_term))
+
 	# ================================ Turn into same dimension ====================================
 	# every distinct terms
-	terms = tfidf.map(lambda x: (x[0][0])).distinct()
+	terms = filtered_tfidf.map(lambda x: (x[0][0])).distinct()
 	
 	# empty matrix elements
 	# output = (('term', 'document id'), 0)
@@ -60,7 +63,7 @@ def main():
 
 	# tfidf for each term in every document
 	# output = (('term', 'document id'), tfidf)
-	map2 = tfidf.union(empty_matrix_elem).reduceByKey(lambda x,y : x+y).sortByKey()
+	map2 = filtered_tfidf.union(empty_matrix_elem).reduceByKey(lambda x,y : x+y).sortByKey()
 
 	# transform into matrix
 	# output = ('term', [('document id1', tfidf1), ('document id2', tfidf2), ...]
@@ -70,10 +73,6 @@ def main():
 	query_term_list = tfidf_matrix.lookup(query_term)
 	q = [i for i in query_term_list]
 	sqrt_query = (sum(map(lambda x: x[1]** 2, q[0]))) **(1/2)
-
-
-	# ======================== filter terms ======================
-	tfidf_matrix = tfidf_matrix.filter(lambda x : re.match('^(gene|dis)_[^ ]+_\\1$', x[0]))
 	
 	# ============== calculate similarities  ====================
 	similarities = tfidf_matrix.map(lambda x: (sum([q[0][ele][1] * x[1][ele][1] for ele in range (len(q[0]))])/ ((sum(map(lambda w: w[1]**2, x[1]))**(1/2))*sqrt_query), x[0]))
