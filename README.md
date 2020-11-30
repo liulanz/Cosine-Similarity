@@ -9,6 +9,11 @@ This program computes [Cosine Similarity](https://en.wikipedia.org/wiki/Cosine_s
 # Requirement
 - Python
 - Apache Spark
+- PySpark
+	```
+	pip install pyspark
+	```
+
 
 # Run 
 ```
