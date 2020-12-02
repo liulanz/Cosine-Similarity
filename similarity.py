@@ -23,10 +23,6 @@ def main():
 	# might have same terms in same document
 	reduce1 = map1.reduceByKey(lambda x,y:x+y)
 
-	# empty document id pair for every document id: ('document id', 0)
-	empty_doc = reduce1.map(lambda x: (x[0][0], 0)).distinct()
-
-
 	# ============================= Computing TF====================================
 	# counting how many different terms are in each document 
 	# (('document id', 'term'),1) => ('document id', [1+1+1...])
@@ -57,6 +53,9 @@ def main():
 	# every distinct terms
 	terms = filtered_tfidf.map(lambda x: (x[0][0])).distinct()
 	
+	# empty document id pair for every document id: ('document id', 0)
+	empty_doc = reduce1.map(lambda x: (x[0][0], 0)).distinct()
+
 	# empty matrix elements
 	# output = (('term', 'document id'), 0)
 	empty_matrix_elem = terms.cartesian(empty_doc).map(lambda x: ((x[0], x[1][0]), x[1][1]))
@@ -78,9 +77,9 @@ def main():
 	similarities = tfidf_matrix.map(lambda x: (sum([q[0][ele][1] * x[1][ele][1] for ele in range (len(q[0]))])/ ((sum(map(lambda w: w[1]**2, x[1]))**(1/2))*sqrt_query), x[0]))
 	
 	# ================= sorting =============================== 
-	similarities = similarities.sortByKey(ascending = False)
+	sorted_similarities = similarities.sortByKey(ascending = False)
 	
-	similarities.saveAsTextFile("output/")
+	sorted_similarities.saveAsTextFile("output/")
 
 if __name__ == '__main__':
 	main()
