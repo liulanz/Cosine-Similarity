@@ -5,7 +5,7 @@ make
 ```
 or
 ```
-make INFILE=<textfile> QUERY=<query_term>
+make FILE=<textfile> TERM=<query_term>
 ```
 
 Output will be partitioned and saved in output/ 

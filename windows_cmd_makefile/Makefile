@@ -1,7 +1,6 @@
-FILE?="..\project2_test.txt"
-QUERY?="gene_egfr+_gene"
+FILE?="..\project2_demo.txt"
+TERM?="gene_egfr+_gene"
 default:
-	spark-submit ..\similarity.py ${FILE} ${QUERY} 
-	type output\part-*
+	spark-submit ..\similarity_fast.py ${FILE} ${TERM} 
 clean:
 	rmdir /S /Q output
