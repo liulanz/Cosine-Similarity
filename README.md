@@ -25,3 +25,10 @@ Output will be partitioned and saved in ``output/``. Make sure you delete ``outp
 
 ### P.S.
 To simplify the process, ``output/`` will only contains terms in the form of ``dis_..._dis`` and ``gene_..._gene``
+
+# Example Query
+```
+spark-submit similarity_fast.py project2_test.txt "gene_egfr+_gene"
+```
+### Output
+<img src="exampleOutput.png" width="500" height="300">
